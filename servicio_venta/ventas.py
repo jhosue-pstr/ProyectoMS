@@ -97,6 +97,8 @@ def crear_venta(datos_venta):
     except Exception as e:
         return {"error": f"Error al crear el venta: {str(e)}"}
 
+
+
 def actualizar_venta(id_venta , datos_venta):
     try:
         conexion = conectar("servicio_venta")
@@ -110,6 +112,9 @@ def actualizar_venta(id_venta , datos_venta):
         return {"mensaje": "venta actualizado correctamente"}
     except Exception as e:
         return {"error": f"Error al actualizar el venta: {str(e)}"}
+
+
+
 
 def eliminar_venta(id_venta):
     try:

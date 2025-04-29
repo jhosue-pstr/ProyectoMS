@@ -74,7 +74,7 @@ def obtener_cliente(id_cliente):
 
 
 
-@app.route('/detalle_venta', methods=['POST'])
+@app.route('/ventasDetalle', methods=['POST'])
 def crear_detalle_venta():
     datos_detalle_venta = request.get_json()  
     return crear_ventas_detalles(datos_detalle_venta)
@@ -87,6 +87,10 @@ def eliminar_ventas_detallle(id_detalle_producto):
     return jsonify(ventasDetalle.eliminar_producto(id_detalle_producto))
 
 
+@app.route("/ventasDetalle/<int:id_detalle_venta>", methods=["PUT"])
+def actualizar_venta_detalle(id_detalle_venta):
+    datos = request.get_json()
+    return jsonify(ventas.actualizar_venta_detalle(id_detalle_venta, datos))
 
 
 

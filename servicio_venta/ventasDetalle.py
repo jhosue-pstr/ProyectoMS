@@ -2,6 +2,9 @@ import mysql.connector
 import json
 from consul import Consul
 import requests
+from decimal import Decimal
+
+
 
 consul = Consul()
 
@@ -62,38 +65,6 @@ def obtener_cliente_por_id(id_cliente):
     except Exception as e:
         return {"error": f"Error al consultar el cliente: {str(e)}"}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def actualizar_stock_producto(id_producto, cantidad_vendida):
     try:
         producto = obtener_producto_por_id(id_producto)
@@ -142,8 +113,6 @@ def obtener_ventas_detalle():
         return {"error": f"error al obtener las ventas detalle: {str(e)}"}
 
 
-
-
 def obtener_ventas_detalles_por_id(id_detalle_producto):
     try:
         conexion = conectar("servicio_venta")
@@ -174,60 +143,147 @@ def obtener_ventas_detalles_por_id(id_detalle_producto):
         return {"error": f"Error al obtener detalle de venta por ID: {str(e)}"}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+from decimal import Decimal
 
 def crear_ventas_detalles(datos_detalle_venta):
     try:
-        conexion = conectar("servicio_venta") 
-        cursor = conexion.cursor()
+        # Conectar a la base de datos de ventas
+        try:
+            conexion = conectar("servicio_venta")
+            cursor = conexion.cursor()
+        except Exception as e:
+            return {"error": f"Error al conectar con la base de datos: {str(e)}"}
 
-        producto_info = obtener_producto_por_id(datos_detalle_venta["id_producto"])
+        # Obtener la información del producto
+        try:
+            id_producto = datos_detalle_venta["id_producto"]
+            producto_info = obtener_producto_por_id(id_producto)
+        except Exception as e:
+            conexion.close()
+            return {"error": f"Error al obtener el producto: {str(e)}"}
+
         if "error" in producto_info:
-            return {"error": f"Error al obtener el producto: {producto_info['error']}"}
-        
-        precio_unitario = float(producto_info["precio"]) 
-        cantidad = float(datos_detalle_venta["cantidad"])
-        subtotal = round(cantidad * precio_unitario, 2)
+            conexion.close()
+            return {"error": f"Error desde microservicio producto: {producto_info['error']}"}
 
-        cursor.execute(
-            "INSERT INTO detalle_venta (id_venta, id_producto, cantidad, precio_unitario, subtotal) VALUES (%s, %s, %s, %s, %s)",
-            (
-                datos_detalle_venta["id_venta"],
-                datos_detalle_venta["id_producto"],
-                cantidad, 
-                precio_unitario,  
-                subtotal  
+        # Calcular subtotal
+        try:
+            precio_unitario = Decimal(str(producto_info["precio"]))
+            cantidad = Decimal(str(datos_detalle_venta["cantidad"]))
+            subtotal = round(cantidad * precio_unitario, 2)
+        except Exception as e:
+            conexion.close()
+            return {"error": f"Error al calcular subtotal: {str(e)}"}
+
+        # Insertar el detalle de venta
+        try:
+            cursor.execute(
+                "INSERT INTO detalle_venta (id_venta, id_producto, cantidad, precio_unitario, subtotal) VALUES (%s, %s, %s, %s, %s)",
+                (
+                    datos_detalle_venta["id_venta"],
+                    id_producto,
+                    int(cantidad),
+                    float(precio_unitario),
+                    float(subtotal)
+                )
             )
-        )
-        
-        resultado_actualizacion_stock = actualizar_stock_producto(datos_detalle_venta["id_producto"], cantidad)
-        if "error" in resultado_actualizacion_stock:
-            return {"error": f"Error al actualizar el stock: {resultado_actualizacion_stock['error']}"}
+            conexion.commit()
+        except Exception as e:
+            conexion.rollback()
+            conexion.close()
+            return {"error": f"Error al insertar detalle de venta en base de datos: {str(e)}"}
 
-        conexion.commit()
+        # Actualizar el stock del producto
+        try:
+            resultado_actualizacion_stock = actualizar_stock_producto(id_producto, int(cantidad))
+            if "error" in resultado_actualizacion_stock:
+                conexion.close()
+                return {"error": f"Error al actualizar el stock: {resultado_actualizacion_stock['error']}"}
+        except Exception as e:
+            conexion.close()
+            return {"error": f"Error al llamar a actualizar_stock_producto: {str(e)}"}
+
+        # Actualizar el total de la venta
+        try:
+            cursor.execute(
+                "SELECT SUM(subtotal) FROM detalle_venta WHERE id_venta = %s", 
+                (datos_detalle_venta["id_venta"],)
+            )
+            total_venta = cursor.fetchone()[0] or Decimal("0.00")
+            total_con_iva = total_venta * Decimal("1.18")
+
+            cursor.execute(
+                "UPDATE venta SET total = %s WHERE id = %s",
+                (round(total_con_iva, 2), datos_detalle_venta["id_venta"])
+            )
+            conexion.commit()
+        except Exception as e:
+            conexion.rollback()
+            conexion.close()
+            return {"error": f"Error al actualizar el total de la venta: {str(e)}"}
+
+        # Cerrar conexión final
         conexion.close()
-        
-        return {"mensaje": "Detalle de venta creado y stock actualizado correctamente"}
-    
+        return {"mensaje": "Detalle de venta creado, stock actualizado y total de venta ajustado correctamente"}
+
     except Exception as e:
-        return {"error": f"Error al crear el detalle de venta: {str(e)}"}
+        return {"error": f"Error inesperado: {str(e)}"}
 
 
+
+def actualizar_venta_detalle(id_detalle, nuevos_datos):
+    try:
+        try:
+            conexion = conectar("servicio_venta")
+            cursor = conexion.cursor()
+        except Exception as e:
+            return {"error": f"Error al conectar con la base de datos: {str(e)}"}
+
+        try:
+            id_producto = nuevos_datos["id_producto"]
+            producto_info = obtener_producto_por_id(id_producto)
+        except Exception as e:
+            return {"error": f"Error al obtener el producto: {str(e)}"}
+
+        if "error" in producto_info:
+            return {"error": f"Error desde microservicio producto: {producto_info['error']}"}
+
+        try:
+            precio_unitario = float(producto_info["precio"])
+            cantidad = float(nuevos_datos["cantidad"])
+            subtotal = round(cantidad * precio_unitario, 2)
+        except Exception as e:
+            return {"error": f"Error al calcular subtotal: {str(e)}"}
+
+        try:
+            cursor.execute(
+                "UPDATE detalle_venta SET id_venta = %s, id_producto = %s, cantidad = %s, precio_unitario = %s, subtotal = %s WHERE id_detalle = %s",
+                (
+                    nuevos_datos["id_venta"],
+                    id_producto,
+                    cantidad,
+                    precio_unitario,
+                    subtotal,
+                    id_detalle
+                )
+            )
+            conexion.commit()
+        except Exception as e:
+            conexion.rollback()
+            return {"error": f"Error al actualizar el detalle de venta en base de datos: {str(e)}"}
+        finally:
+            conexion.close()
+        try:
+            resultado_actualizacion_stock = actualizar_stock_producto(id_producto, cantidad)
+            if "error" in resultado_actualizacion_stock:
+                return {"error": f"Error al actualizar el stock: {resultado_actualizacion_stock['error']}"}
+        except Exception as e:
+            return {"error": f"Error al llamar a actualizar_stock_producto: {str(e)}"}
+
+        return {"mensaje": "Detalle de venta actualizado y stock modificado correctamente"}
+
+    except Exception as e:
+        return {"error": f"Error inesperado: {str(e)}"}
 
 
 def eliminar_ventas_detallle(id_detalle_producto):
