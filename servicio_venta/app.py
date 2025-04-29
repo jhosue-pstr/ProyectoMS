@@ -80,5 +80,15 @@ def crear_detalle_venta():
     return crear_ventas_detalles(datos_detalle_venta)
 
 
+
+
+@app.route("/ventasDetalle/<int:id_detalle_venta>", methods=["DELETE"])
+def eliminar_ventas_detallle(id_detalle_producto):
+    return jsonify(ventasDetalle.eliminar_producto(id_detalle_producto))
+
+
+
+
+
 if __name__ == "__main__":
     app.run(debug=True,host="0.0.0.0",port=5003)

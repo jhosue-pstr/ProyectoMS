@@ -96,15 +96,12 @@ def obtener_cliente_por_id(id_cliente):
 
 def actualizar_stock_producto(id_producto, cantidad_vendida):
     try:
-        # Primero obtienes el producto
         producto = obtener_producto_por_id(id_producto)
         if "error" in producto:
-            return producto  # Si no encuentras el producto, retornas un error
+            return producto 
 
-        # Calculas el nuevo stock
         nuevo_stock = producto['stock'] - cantidad_vendida
 
-        # Actualizas el stock en la base de datos
         conexion = conectar("servicio_producto")
         cursor = conexion.cursor()
         cursor.execute(
@@ -164,11 +161,9 @@ def obtener_ventas_detalles_por_id(id_detalle_producto):
         producto_info = obtener_producto_por_id(venta_detalle['id_producto'])
         venta_detalle['producto'] = producto_info
 
-        # Obtener información de la venta
         venta_info = obtener_venta_por_id(venta_detalle['id_venta'])
         venta_detalle['venta'] = venta_info
 
-        # Obtener información del cliente (si existe)
         if venta_info and 'id_cliente' in venta_info:
             cliente_info = obtener_cliente_por_id(venta_info['id_cliente'])
             venta_detalle['venta']['cliente'] = cliente_info
@@ -201,7 +196,6 @@ def crear_ventas_detalles(datos_detalle_venta):
         conexion = conectar("servicio_venta") 
         cursor = conexion.cursor()
 
-        # Obtener información del producto
         producto_info = obtener_producto_por_id(datos_detalle_venta["id_producto"])
         if "error" in producto_info:
             return {"error": f"Error al obtener el producto: {producto_info['error']}"}
@@ -210,7 +204,6 @@ def crear_ventas_detalles(datos_detalle_venta):
         cantidad = float(datos_detalle_venta["cantidad"])
         subtotal = round(cantidad * precio_unitario, 2)
 
-        # Insertar el detalle de la venta en la base de datos
         cursor.execute(
             "INSERT INTO detalle_venta (id_venta, id_producto, cantidad, precio_unitario, subtotal) VALUES (%s, %s, %s, %s, %s)",
             (
@@ -222,12 +215,10 @@ def crear_ventas_detalles(datos_detalle_venta):
             )
         )
         
-        # Llamar a la función para actualizar el stock
         resultado_actualizacion_stock = actualizar_stock_producto(datos_detalle_venta["id_producto"], cantidad)
         if "error" in resultado_actualizacion_stock:
             return {"error": f"Error al actualizar el stock: {resultado_actualizacion_stock['error']}"}
 
-        # Confirmar cambios y cerrar la conexión
         conexion.commit()
         conexion.close()
         
@@ -235,3 +226,20 @@ def crear_ventas_detalles(datos_detalle_venta):
     
     except Exception as e:
         return {"error": f"Error al crear el detalle de venta: {str(e)}"}
+
+
+
+
+def eliminar_ventas_detallle(id_detalle_producto):
+    try:
+        conexion = conectar("servicio_venta")
+        cursor = conexion.cursor()
+        cursor.execute("DELETE FROM  detalle_venta WHERE id = %s", (id_detalle_producto,))
+        conexion.commit()
+        conexion.close()
+        return {"mensaje": "detalle de venta eliminado correctamente"}
+    except Exception as e:
+        return {"error": f"Error al eliminar el detalle de venta: {str(e)}"}
+
+
+
