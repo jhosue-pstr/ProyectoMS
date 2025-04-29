@@ -1,0 +1,32 @@
+{
+  "servicio_cliente": {
+    "MYSQL": {
+      "host": "127.0.0.1",
+      "user": "root",
+      "password": "",
+      "database": "cliente_db"
+    },
+    "PUERTO": 5001,
+    "MENSAJE_BIENVENIDA": "Bienvenido al servicio de cliente"
+  },
+  "servicio_producto": {
+    "MYSQL": {
+      "host": "127.0.0.1",
+      "user": "root",
+      "password": "",
+      "database": "producto_db"
+    },
+    "PUERTO": 5002,
+    "MENSAJE_BIENVENIDA": "Bienvenido al servicio de producto"
+  },
+  "servicio_venta": {
+    "MYSQL": {
+      "host": "127.0.0.1",
+      "user": "root",
+      "password": "",
+      "database": "venta_db"
+    },
+    "PUERTO": 5003,
+    "MENSAJE_BIENVENIDA": "Bienvenido al servicio de venta"
+  }
+}
