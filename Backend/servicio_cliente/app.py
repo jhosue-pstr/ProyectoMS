@@ -1,10 +1,12 @@
 #app.py cliente
 
 from flask import Flask,jsonify,request
+from flask_cors import CORS
 from consul import Consul
 import clientes
 
 app = Flask(__name__)
+CORS(app)
 consul_cliente = Consul()
 
 def registrar_en_consul():
