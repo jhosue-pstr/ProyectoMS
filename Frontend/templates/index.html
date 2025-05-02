@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mi Página Web</title>
+    <link
+      rel="stylesheet"
+      href="{{url_for('static',filename = 'css/index.css')}}"
+    />
+  </head>
+  <body>
+    <div class="grid">
+      <div class="header">
+        <div class="btMenu">
+          <button id="toggleSidebar">menu</button>
+        </div>
+        <div class="Logo">logo</div>
+        <div class="Opciones">
+          <ul>
+            <li>opcion1</li>
+            <li>opcion2</li>
+            <li>opcion3</li>
+            <li>opcion4</li>
+          </ul>
+        </div>
+        <div class="Usuario">
+          <div class="usuarios">nombreUsuario</div>
+          <div class="usuarios">fotoUsuarioi</div>
+          <div class="usuarios">salir</div>
+        </div>
+      </div>
+
+      <div class="sidebar" id="sidebar">
+        <div class="rutas">rutas</div>
+        <div class="extras">extras</div>
+      </div>
+
+      <p class="content" id="content">Main Content</p>
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  </body>
+</html>
