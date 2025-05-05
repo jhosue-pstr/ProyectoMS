@@ -6,6 +6,7 @@ import ventasDetalle
 from ventasDetalle import crear_ventas_detalles
 
 
+
 app = Flask(__name__)
 consul_cliente = Consul()
 
@@ -13,7 +14,7 @@ def registrar_en_consul():
     consul_cliente.agent.service.register(
         "servicio_venta",
         service_id="servicio_venta_5003",
-        port=5002,
+        port=5003,
         tags=["venta"]
     )
 
