@@ -31,6 +31,8 @@ def obtener_clientes():
     except Exception as e:
         return {"error": f"Error al obtener los clientes: {str(e)}"}
 
+
+
 def obtener_cliente_por_id(id_cliente):
     try:
         conexion = conectar("servicio_cliente")

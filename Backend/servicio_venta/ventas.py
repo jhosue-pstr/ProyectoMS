@@ -49,12 +49,15 @@ def obtener_cliente_por_id(id_cliente):
     try:
         url_cliente = obtener_direccion_servicio("servicio_cliente")
         response = requests.get(f"{url_cliente}/clientes/{id_cliente}", timeout=3)
-        response.raise_for_status()  # Lanza excepción si status no es 2xx
+        response.raise_for_status() 
         return response.json()
     except Exception as e:
-        raise Exception(f"No se pudo obtener el cliente: {str(e)}")
+        raise Exception(f"No se pudo obtener datos del cliente (microservicio caído): {str(e)}")
 
-
+try:
+    cliente = obtener_cliente_por_id(1)
+except Exception as e:
+    print("Error:", e)
 
 
 def obtener_ventas():
